@@ -10,7 +10,8 @@
 }
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-image: url(https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif);
+  /* background-image: url(https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif); */
+  background-image: url(../images/default_bg.jpg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -232,6 +233,26 @@ img {
     opacity: 0;
     box-shadow: 0 0 15px 15px rgba(0, 0, 0, 0.418);
     transition: 0.5s ease-in-out;
+}
+
+.skinCollection {
+    background-color: whitesmoke;
+    z-index: 9;
+    transform: translateY(110%);
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.404);
+}
+
+.skinCollection__item {
+    width: 35px;
+    height: 35px;
+    border-radius: 25%;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.skinCollection__item:hover {
+    scale: 1.2;
 }
 
 

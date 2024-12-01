@@ -41,6 +41,7 @@ const aboutDevPopUp = document.getElementById('aboutDevPopUp');
 const sidebar = document.getElementById("sidebar");
 const closeSidebarBtn = document.getElementById("closeSidebarBtn");
 const sidebarMisc = document.getElementById("sidebarMisc");
+const skinCollection = document.getElementById('skinCollection');
 
 // playlist page elements===================
 const PlaylistPage = document.getElementById("PlaylistPage");
@@ -346,6 +347,7 @@ toggleSidebar.addEventListener("click", () => {
 });
 closeSidebarBtn.addEventListener("click", () => {
   sidebar.style.transform = "translateX(-100%)";
+  skinCollection.style.transform = 'translateY(110%)'
 });
 
 function toggleHeadPopOver() {
@@ -364,11 +366,13 @@ toggleAbout.addEventListener("click", () => {
 //about dev pop up=======================================
 devPopUpBtn.addEventListener('click', () => {
   aboutDevPopUp.style = 'transform: translate(5.5%, 0%); opacity: 1';
+  aboutDevPopUp.style.background = PlaylistPage.style.background; //force-apply theme color
   toggleHeadPopOver();
 })
 devPopUpClose.addEventListener('click', () => {
   aboutDevPopUp.style = 'transform: translate(5.5%, 120%); opacity: 0';
 })
+
 
 // play-pause control===========================
 togglePlayBtn.addEventListener("click", (event) => {
@@ -565,18 +569,21 @@ favouritePlaylistBody.addEventListener("click", (event) => {
 // Switch to library/playlist and toggle themes===
 sidebarMisc.addEventListener("click", (event) => {
   // event.stopPropagation();
-  console.log(event.target);
+  skinCollection.style.transform = 'translateY(110%)'
   if (event.target.classList.contains("library")) {
     sidebar.style.transform = "translateX(-100%)";
     PlaylistPage.style.transform = "translateX(0%)";
+    skinCollection.style.transform = 'translateY(110%)'
   }
   if (event.target.classList.contains("themes")) {
-    // at this case a new theme pallete can be used instead of dragging from playlist page
-    sidebar.style.transform = "translateX(-100%)";
-    PlaylistPage.style.transform = "translateX(0%)";
-    toggleThemeBtn.classList.toggle("toggleActive");
-    toggleThemeBtn.classList.toggle("fa-brush");
-    toggleThemeBtn.classList.toggle("fa-xmark");
-    themePalette.classList.toggle("toggleVisibility");
+    skinCollection.style.transform = 'translateY(0%)'
   }
-});
+})
+
+//changing player skin==============================
+skinCollection.addEventListener('click', (event) => {
+  PlaylistPage.style.background = event.target.style.background;
+  sidebar.style.background = event.target.style.background;
+  aboutDevPopUp.style.background = event.target.style.background;
+  skinCollection.style.transform = 'translateY(110%)'
+})

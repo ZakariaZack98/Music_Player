@@ -9,4 +9,4 @@ How to use:
 
 2. Run the generateFilePaths.js file using node.js
 
-3. Open the index.html on your browser and you're ready to go!
+3. Open the index.html with live server on your browser and you're ready to go!
