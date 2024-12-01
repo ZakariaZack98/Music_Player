@@ -56,6 +56,7 @@ const favouritePlaylistBody = document.getElementById("favouritePlaylistBody");
 
 //?===================helper functions========================
 function updateMetadataFromCollection() {
+  //metadata collection switch based on which playlist is now playing
   if (favoritePlaylistPlaying) {
     title.textContent = favoritePlaylistMetadata[positionInPlaylist - 1].title;
     artist.textContent = favoritePlaylistMetadata[positionInPlaylist - 1].artist;
@@ -83,28 +84,20 @@ function updateMetadataFromCollection() {
 
 //fetch the tracks metadata then display on DOM===
 function updateMetaData() {
-  // Ensure the audio source has a valid MP3 file path
   if (audioSource.src) {
-    // Fetch the MP3 file as a Blob
     fetch(audioSource.src)
       .then((response) => {
         if (!response.ok) throw new Error("Failed to fetch the MP3 file.");
-        return response.blob(); // Convert response to Blob
+        return response.blob();
       })
       .then((blob) => {
-        // Use jsmediatags to read metadata
         jsmediatags.read(blob, {
           onSuccess: function (tag) {
-            // Extract metadata
             const title = tag.tags.title || "Unknown Title";
             const artist = tag.tags.artist || "Unknown Artist";
             const picture = tag.tags.picture;
-
-            // Display metadata
             document.getElementById("title").textContent = title;
             document.getElementById("artist").textContent = artist;
-
-            // Display thumbnail if available
             if (picture) {
               const base64String = btoa(
                 new Uint8Array(picture.data).reduce((data, byte) => data + String.fromCharCode(byte), "")
@@ -114,7 +107,7 @@ function updateMetaData() {
               coverPart.style.backgroundImage = `url(${imgUrl})`;
               playerBody.style.backgroundImage = `url(${imgUrl})`;
             } else {
-              //show a defaullt thumbanil
+              //show a defaullt thumbanil if thumbnail is not available
               coverPart.style.backgroundImage = `url(../images/thumbnail_default.jpg)`;
               playerBody.style.backgroundImage = `url(../images/thumbnail_default.jpg)`;
             }
@@ -148,8 +141,7 @@ function populateMetadataCollection(filePaths) {
                 const title = tag.tags.title || "Unknown Title";
                 const artist = tag.tags.artist || "Unknown Artist";
                 const picture = tag.tags.picture;
-
-                // Preparing metadata object
+                // storing extracted metadata into an object
                 const metadata = {
                   title,
                   artist,
@@ -159,7 +151,6 @@ function populateMetadataCollection(filePaths) {
                       )}`
                     : `url(./images/playlist_thumbnail_default.png)`,
                 };
-
                 resolve(metadata);
               },
               onError: function (error) {
@@ -169,21 +160,12 @@ function populateMetadataCollection(filePaths) {
           });
         });
     });
-
     Promise.all(metadataPromises)
       .then((metadataCollection) => resolve(metadataCollection))
       .catch((error) => reject(error));
   });
 }
 
-//load the first song===========================
-function loadFirstSong() {
-  console.log("loading first song...");
-  audioSource.src = currentPlaylist[0];
-  track.load();
-  updateMetaData();
-  positionInPlaylist = 1;
-}
 // fetching metadata and updating playlist=== ===
 async function collectPlaylistMetadata() {
   const collection = await populateMetadataCollection(currentPlaylist);
@@ -215,6 +197,14 @@ async function collectPlaylistMetadata() {
   }
 }
 
+//load the first song===========================
+function loadFirstSong() {
+  audioSource.src = currentPlaylist[0];
+  track.load();
+  updateMetaData();
+  positionInPlaylist = 1;
+}
+
 //play/pause icon switch functions==============
 function addPauseIcon() {
   playIcon.classList.remove("fa-play");
@@ -238,9 +228,9 @@ function formatSeconds(totalSeconds) {
 //load the updated source and play==============
 function trackLoadAndPlay() {
   if (audioSource.src === undefined) {
-    // * counter-measures: if src is not found load the first song
+    // * counter-measures: if src is not found, load the first song restarting the playlist
     audioSource = currentPlaylist[0];
-    positionInPlaylist = 1; //!track
+    positionInPlaylist = 1;
   }
   track.load();
   updateMetadataFromCollection();
@@ -261,10 +251,10 @@ function nextSong() {
     if (shuffle) {
       playRandomSong();
     } else {
-      if (audioSource.src === undefined || null ) {
-        // * counter-measures: if src is not found load the first song
+      if (audioSource.src === undefined || null) {
+        // * counter-measures: if src is not found load the first song, restarting the playlist
         audioSource = currentPlaylist[0];
-        positionInPlaylist = 1; //!track
+        positionInPlaylist = 1;
       }
       audioSource.src = currentPlaylist[positionInPlaylist];
       updateMetadataFromCollection()
@@ -280,7 +270,7 @@ function playRandomSong() {
   let randomIndex = [];
   randomIndex.push(Math.floor(Math.random() * currentPlaylist.length));
 
-  //* counter-measures if same song is randomely chosen next===
+  //* (if same song is randomely picked to play next, precautions for never repeating same song on shuffle)
   if (randomIndex[0] === positionInPlaylist - 1) {
     if (randomIndex[0] === currentPlaylist.length - 1 && positionInPlaylist === currentPlaylist.length) {
       audioSource.src = currentPlaylist[randomIndex[0] - 1];
@@ -305,6 +295,8 @@ function playRandomSong() {
   }
   trackLoadAndPlay();
 }
+
+//handling favourite markings========================
 function addFavoriteMark() {
   toggleFavoriteBtn.classList.remove("fa-regular");
   togglePlayBtn.classList.add("fa-solid");
@@ -319,16 +311,25 @@ function checkIfFavorite() {
   } else addFavoriteMark();
 }
 
+//  toggles head popover/ three dot button==============
+function toggleHeadPopOver() {
+  headPartPopover.classList.toggle("toggleVisibility");
+  toggleAbout.classList.toggle("fa-ellipsis-vertical");
+  toggleAbout.classList.toggle("fa-xmark");
+  toggleAbout.classList.toggle("ps-2");
+  toggleAbout.classList.toggle("toggleActive");
+}
+
 //?=======================processes==============================
 // === === === Operations after async data fetch === === ===
 fetch("filePaths.json")
   .then((response) => response.json())
   .then((filePaths) => {
     filePathsArr = filePaths;
-    currentPlaylist = [...filePathsArr];
+    currentPlaylist = [...filePathsArr]; //creating an playlist from filePathsArray
     loadFirstSong(); //instantly load first song after scanning
-    collectPlaylistMetadata(); //collects metadata for the playlist
-    trackCount.textContent = currentPlaylist.length;
+    collectPlaylistMetadata(); //collects and updates metadata on playlist page
+    trackCount.textContent = currentPlaylist.length; //updates the total song count on playlist page
   })
   .catch((error) => {
     console.error("Error fetching file paths:", error);
@@ -349,14 +350,6 @@ closeSidebarBtn.addEventListener("click", () => {
   sidebar.style.transform = "translateX(-100%)";
   skinCollection.style.transform = 'translateY(110%)'
 });
-
-function toggleHeadPopOver() {
-  headPartPopover.classList.toggle("toggleVisibility");
-  toggleAbout.classList.toggle("fa-ellipsis-vertical");
-  toggleAbout.classList.toggle("fa-xmark");
-  toggleAbout.classList.toggle("ps-2");
-  toggleAbout.classList.toggle("toggleActive");
-}
 
 //toggle header popover=========================
 toggleAbout.addEventListener("click", () => {
@@ -420,22 +413,19 @@ toggleFavoriteBtn.addEventListener("click", () => {
   if (favoritePlaylist.includes(currentSongPath)) {
     Array.from(favouritePlaylistBody.children)[favoritePlaylist.indexOf(currentSongPath)].remove();
     favoritePlaylist.splice(favoritePlaylist.indexOf(currentSongPath), 1); //remove if already exists in favorite playlist
-    currentPlaylist.splice(currentPlaylist.indexOf(currentSongPath), 1); //remove from current playlist
+    currentPlaylist.splice(currentPlaylist.indexOf(currentSongPath), 1); //remove from current playlist also
     removeFavoriteMark();
-    // // ! this part below causing a bug - investigate
-    // favoritePlaylistMetadata.splice(favoritePlaylistMetadata.indexOf(favoritePlaylistMetadata[positionInPlaylist]), 1);
     for(let item of favoritePlaylistMetadata) {
       if(item.title === document.getElementById('title').textContent) {
         favoritePlaylistMetadata.splice(favoritePlaylistMetadata.indexOf(item), 1);
       }
     }
-    // if(favoritePlaylistPlaying) positionInPlaylist--;
   } else {
     favoritePlaylist.push(currentSongPath);
     addFavoriteMark();
     favoritePlaylistMetadata.push(playlistMetadata[positionInPlaylist - 1]);
     let clonedElement = Array.from(playlistBody.children)[positionInPlaylist].cloneNode(true); //incrementing index considering the favourite playlist body is the default first element inside playlistbody
-    clonedElement.style.opacity = 1; //setting defauly opacity to 1 if it's cloned from a 0 opacity element [bugfix]
+    clonedElement.style.opacity = 1; //setting default opacity to 1 if it's cloned from a 0 opacity element [bugfix]
     favouritePlaylistBody.appendChild(clonedElement);
   }
 });
@@ -471,7 +461,7 @@ prevBtn.addEventListener("click", () => {
   checkIfFavorite();
 });
 
-//handling loop ========================================
+//handling loop =======================================
 repeatBtn.addEventListener("click", () => {
   loopBtnClicksCount++;
   if (loopBtnClicksCount === 1) {
@@ -482,7 +472,7 @@ repeatBtn.addEventListener("click", () => {
     repeatBtn.classList.remove("fa-repeat");
     repeatBtn.classList.add("fa-repeat-1");
   } else {
-    loopBtnClicksCount = 0;
+    loopBtnClicksCount = 0; //after three clicks resetting count to 0 to apply default state.
     playlistRepeat = false;
     trackRepeat = false;
     repeatBtn.classList.add("fa-repeat");
@@ -522,13 +512,13 @@ themePalette.addEventListener("click", (event) => {
 playlistBody.addEventListener("click", (event) => {
   favoritePlaylistPlaying = false;
   defaultPlaylistPlaying = true;
-  currentPlaylist = [...filePathsArr];
-  let indexNumber = Number(event.target.getAttribute("index"));
-  audioSource.src = currentPlaylist[indexNumber];
-  positionInPlaylist = indexNumber + 1; //!track
+  currentPlaylist = [...filePathsArr]; //re-assigning the default playlist
+  let indexNumber = Number(event.target.getAttribute("index")); //getting the index from dom's attribute
+  audioSource.src = currentPlaylist[indexNumber]; //updating source based on the retrieved index
+  positionInPlaylist = indexNumber + 1; //re adjusting current position
   trackLoadAndPlay();
   checkIfFavorite();
-  PlaylistPage.style.transform = "translateX(100%)"; //!mark
+  PlaylistPage.style.transform = "translateX(100%)";
 });
 
 //switching between playlists ============================
@@ -556,13 +546,13 @@ favouritePlaylistBody.addEventListener("click", (event) => {
   event.stopPropagation();
   favoritePlaylistPlaying = true;
   defaultPlaylistPlaying = false;
-  currentPlaylist = [...favoritePlaylist];
+  currentPlaylist = [...favoritePlaylist]; //re-assigning current playlist
   let indexNumber = Array.from(favouritePlaylistBody.children).indexOf(event.target);
   audioSource.src = currentPlaylist[indexNumber];
-  positionInPlaylist = indexNumber + 1; //!track
+  positionInPlaylist = indexNumber + 1;
   trackLoadAndPlay();
   checkIfFavorite();
-  PlaylistPage.style.transform = "translateX(100%)"; //!mark
+  PlaylistPage.style.transform = "translateX(100%)";
 });
 
 // !=================Sidebar=================================
